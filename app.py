@@ -1,4 +1,4 @@
-# app.py - PRODUCTION READY v4.0
+# app.py - PRODUCTION READY v4.0 (ALL 28 STATES FIXED!)
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -20,10 +20,10 @@ def calculate_lehs_production(sector, practice, states, small_farms, med_farms, 
     farm_sizes = {"Rice": np.array([1.2, 3.5, 10.0]), "Dairy": np.array([3.2, 9.8, 28.4])}
     sizes = farm_sizes[sector]
     
-    # STATE WEIGHTS (PLFS 2024 farm distribution)
+    # STATE WEIGHTS (PLFS 2024 farm distribution) - 7 states + imputation
     state_weights = {
-        "Punjab": 0.08, "Haryana": 0.12, "UP": 0.35, "Gujarat": 0.10, 
-        "Bihar": 0.15, "WB": 0.12, "Telangana": 0.08
+        "Punjab": 0.08, "Haryana": 0.12, "Uttar Pradesh": 0.35, "Gujarat": 0.10, 
+        "Bihar": 0.15, "West Bengal": 0.12, "Telangana": 0.08
     }
     
     # LEHS COEFFICIENTS (Primary sources)
@@ -83,6 +83,16 @@ def calculate_lehs_production(sector, practice, states, small_farms, med_farms, 
     return results, "✅ SUCCESS", state_weights
 
 # ==============================================================================
+# ALL 28 STATES
+# ==============================================================================
+ALL_STATES = ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 
+              'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 
+              'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+              'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 
+              'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 
+              'Uttar Pradesh', 'Uttarakhand', 'West Bengal']
+
+# ==============================================================================
 # UI
 # ==============================================================================
 st.markdown("""
@@ -95,16 +105,15 @@ col1, col2 = st.columns([2,1])
 with col1:
     st.subheader("📊 Project Configuration")
     sector = st.selectbox("Sector", ["Rice", "Dairy"], index=1)
-    practice = st.selectbox("Practice", list(practices.keys()), index=2)
+    practice = st.selectbox("Practice", ["Rice_AWD", "Rice_DSR", "Dairy_Feed", "Dairy_AS"], index=2)
     
 with col2:
     st.subheader("🎚️ Risk Settings")
     adoption_rate = st.slider("Adoption Rate", 10, 50, 25)
 
-st.subheader("🌍 States (PLFS 2024 Weights)")
-states = st.multiselect("Select states", 
-    ["Punjab", "Haryana", "Gujarat", "UP", "Bihar", "WB", "Telangana"], 
-    default=["UP", "Haryana"])
+st.subheader("🌍 States (28 States - Ctrl+Click Multiple)")
+states = st.multiselect("Select states", ALL_STATES, 
+                       default=["Uttar Pradesh", "Haryana", "Punjab"])
 
 st.subheader("👨‍🌾 Farms (BAHS 2023)")
 col1, col2, col3 = st.columns(3)
@@ -132,13 +141,14 @@ if st.button("🚀 RUN MONTE CARLO ANALYSIS (1,000 iterations)", type="primary")
         col3.metric("❤️ Health Impact", f"{results['DALYs_P50']:.0f} DALYs")
         col4.metric("👥 Jobs Created", f"{results['Jobs_P50']:.0f} FTE")
         
-        # STATE BREAKDOWN WITH WEIGHTS
+        # STATE BREAKDOWN WITH WEIGHTS (✅ Validated / ⚠️ Imputed)
         state_results = []
         for state in states:
             weight = state_weights.get(state, 1/len(states))
+            status_icon = "✅" if state in state_weights else "⚠️"
             state_results.append({
                 "State": state,
-                "Weight": f"{weight:.0%}",
+                f"{status_icon} Weight": f"{weight:.0%}",
                 "CH4 tCO₂e": results['CH4_P50'] * weight,
                 "Income ₹Cr": results['Income_P50'] * weight,
                 "DALYs": results['DALYs_P50'] * weight
@@ -160,8 +170,10 @@ if st.button("🚀 RUN MONTE CARLO ANALYSIS (1,000 iterations)", type="primary")
         st.dataframe(farm_df, use_container_width=True)
         
         # DOWNLOADS
-        csv = farm_df.to_csv(index=False).encode()
-        st.download_button("📥 Download Report", csv, "lehs-report.csv", "text/csv")
+        csv = pd.DataFrame(state_results).to_csv(index=False).encode()
+        st.download_button("📥 Download State Report", csv, "lehs-states.csv", "text/csv")
+        farm_csv = farm_df.to_csv(index=False).encode()
+        st.download_button("📥 Download Farm Report", farm_csv, "lehs-farms.csv", "text/csv")
         
         # METHODOLOGY
         with st.expander("📚 Methodology & Sources"):
@@ -175,11 +187,12 @@ if st.button("🚀 RUN MONTE CARLO ANALYSIS (1,000 iterations)", type="primary")
             
             **🎲 Monte Carlo**: 1,000 iterations (±15% efficacy, ±10% scale)
             **🌡️ GWP**: IPCC AR6 CH4=28
-            **⚠️ Conservative**: 25% adoption (P90=40% possible)
+            **⚠️ Imputed**: Non-PLFS states use equal weights
+            **✅ Conservative**: 25% adoption (P90=40% possible)
             """)
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
 **Production Ready v4.0**  
-*Monte Carlo | State Weights | Board Validated*
+*Monte Carlo | 28 States | PLFS Weights | Board Validated*
 """)
