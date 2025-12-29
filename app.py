@@ -18,7 +18,6 @@ import json
 from datetime import datetime
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Tuple
-from scipy import stats
 import plotly.graph_objects as go
 import plotly.express as px
 
@@ -55,7 +54,7 @@ class Project:
     
     def to_dict(self) -> dict:
         data = asdict(self)
-        data["adoption_trajectory"] = str(self.adoption_trajectory) if self.adoption_trajectory else None
+        data["adoption_trajectory"] = json.dumps(self.adoption_trajectory) if self.adoption_trajectory else None
         return data
     
     def validate(self) -> List[str]:
@@ -595,7 +594,7 @@ elif page == "📈 Current Portfolio":
             practice = st.selectbox("Practice", list_practices_by_sector(sector))
         
         with col2:
-            state = st.selectbox("State", ["Punjab", "Haryana", "Uttar Pradesh", "Bihar", "West Bengal", "Gujarat"])
+            state = st.selectbox("State", ["Punjab", "Haryana", "Uttar Pradesh", "Bihar", "West Bengal", "Odisha", "Andhra Pradesh", "Telangana", "Tamil Nadu", "Karnataka", "Kerala", "Maharashtra", "Madhya Pradesh", "Chhattisgarh", "Assam", "Jharkhand", "Gujarat"])
             start_year = st.number_input("Start Year", min_value=2015, max_value=2025, value=2023)
             end_year = st.number_input("End Year", min_value=2015, max_value=2030, value=2024)
         
@@ -665,7 +664,7 @@ elif page == "🎯 Planned Portfolio":
             practice = st.selectbox("Practice", list_practices_by_sector(sector))
         
         with col2:
-            state = st.selectbox("State", ["Punjab", "Haryana", "Uttar Pradesh", "Bihar", "Gujarat"])
+            state = st.selectbox("State", ["Punjab", "Haryana", "Uttar Pradesh", "Bihar", "West Bengal", "Odisha", "Andhra Pradesh", "Telangana", "Tamil Nadu", "Karnataka", "Kerala", "Maharashtra", "Madhya Pradesh", "Chhattisgarh", "Assam", "Jharkhand", "Gujarat"])
             start_year = st.number_input("Start Year", min_value=2025, max_value=2035, value=2025)
             end_year = st.number_input("End Year", min_value=start_year+1, max_value=2040, value=2030)
         
